@@ -6,7 +6,7 @@ import platform
 from datetime import datetime
 
 
-def read_sp2(file_name, debug=False, arm_convention=True):
+def read_sp2(file_name, debug=False, arm_convention=False):
     """
     Loads a binary SP2 raw data file and returns all of the wave forms
     into an xarray Dataset.
@@ -118,35 +118,26 @@ def read_sp2(file_name, debug=False, arm_convention=True):
         UTCtime = TimeDiv10000 * 10000 + TimeRemainder
         diff_epoch_1904 = (
             datetime(1970, 1, 1) - datetime(1904, 1, 1)).total_seconds()
+        tmstamp = UTCtime - diff_epoch_1904 # add timestamp as index
         UTCdatetime = np.array([
-            datetime.utcfromtimestamp(x - diff_epoch_1904) for x in UTCtime])
+            datetime.fromtimestamp(x) for x in tmstamp]) # Local time; if UTC time, use utcfromtimestamp
 
         DateTimeWave = (dt - datetime(1904, 1, 1)).total_seconds() + TimeWave
 
         # Make an xarray dataset for SP2
-        Flag = xr.DataArray(Flag, dims={'event_index': EventIndex})
-        Res1 = xr.DataArray(Res1, dims={'event_index': EventIndex})
-        Res5 = xr.DataArray(Res5, dims={'event_index': EventIndex})
-        Res6 = xr.DataArray(Res6, dims={'event_index': EventIndex})
-        Res7 = xr.DataArray(Res7, dims={'event_index': EventIndex})
-        Res8 = xr.DataArray(Res8, dims={'event_index': EventIndex})
-        Time = xr.DataArray(UTCdatetime, dims={'event_index': EventIndex})
-        EventInd = xr.DataArray(EventIndex, dims={'event_index': EventIndex})
-        DateTimeWaveUTC = xr.DataArray(UTCtime, dims={'event_index': EventIndex})
-        DateTimeWave = xr.DataArray(DateTimeWave, dims={'event_index': EventIndex})
-        TimeWave = xr.DataArray(TimeWave, dims={'event_index': EventIndex})
-        my_ds = xr.Dataset({'time': Time, 'Flag': Flag, 'Res1': Res1, 'Res5': Res5,
-                            'Res6': Res6, 'Res7': Res7, 'Res8': Res8, 'EventIndex': EventInd,
-                            'DateTimeWaveUTC': DateTimeWaveUTC, 'TimeWave': TimeWave,
-                            'DateTimeWave': DateTimeWave})
-
+        # only save local time and waveforms (for peak height fit); use timestamp (seconds since 1970/1/1) as index
+        my_ds = xr.Dataset(data_vars=dict( TimeDate=(["time"], UTCdatetime),),
+                coords=dict(
+                    time=(["time"], tmstamp),
+                    columns=("columns", np.arange(0, 100, 1))))
+        # waveforms
         for i in range(numChannels):
             temp_array = np.zeros((numRecords, numCols), dtype='int')
             for j in range(numRecords):
                 k = i + j*numChannels
                 temp_array[j] = DataWave[k]
-            my_ds['Data_ch' + str(i)] = xr.DataArray(
-                temp_array, dims={'event_index': EventIndex, 'columns': np.arange(0, 100, 1)})
+            my_ds = my_ds.assign({'Data_ch' + str(i):(('time','columns'),temp_array)} )
+
         del my_data
         del DataWave
         return my_ds

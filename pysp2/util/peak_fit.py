@@ -105,31 +105,32 @@ def gaussian_fit(my_ds, config, parallel=False, num_records=None):
         Dataset with gaussian fits
     """
     if num_records is None:
-        num_records = len(my_ds.Res8.values)
+        num_records = len(my_ds.time.values) 
 
     num_trig_pts = int(config['Acquisition']['Pre-Trig Points'])
     start_time = time.time()
 
-    for i in [3, 7]:
-        coeffs = _split_scatter_fit(my_ds, i)
-        Base2 = coeffs['base']
-        PeakHeight2 = coeffs['height']
-        PeakPos2 = coeffs['pos']
-        PeakStart2 = coeffs['start']
-        my_ds['Base_ch' + str(i)] = (('event_index'), Base2)
-        my_ds['Base_ch' + str(i)].attrs["long_name"] = "Base for channel %d" % i
-        my_ds['Base_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkHt_ch' + str(i)] = (('event_index'), PeakHeight2)
-        my_ds['PkHt_ch' + str(i)].attrs["long_name"] = "Height for channel %d" % i
-        my_ds['PkHt_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkSplitPos_ch' + str(i)] = (('event_index'), PeakStart2)
-        my_ds['PkSplitPos_ch' + str(i)].attrs["long_name"] = "Peak start position for channel %d" % i
-        my_ds['PkSplitPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkPos_ch' + str(i)] = (('event_index'), PeakPos2)
-        my_ds['PkPos_ch' + str(i)].attrs["long_name"] = "Peak split position for channel %d" % i
-        my_ds['PkPos_ch' + str(i)].attrs["_FillValue"] = np.nan
+    # get peak height of channel 3 and 7,  split detector
+    # for i in [3, 7]:
+    #     coeffs = _split_scatter_fit(my_ds, i)
+    #     Base2 = coeffs['base']
+    #     PeakHeight2 = coeffs['height']
+    #     PeakPos2 = coeffs['pos']
+    #     PeakStart2 = coeffs['start']
+    #     my_ds['Base_ch' + str(i)] = (('event_index'), Base2)
+    #     my_ds['Base_ch' + str(i)].attrs["long_name"] = "Base for channel %d" % i
+    #     my_ds['Base_ch' + str(i)].attrs["_FillValue"] = np.nan
+    #     my_ds['PkHt_ch' + str(i)] = (('event_index'), PeakHeight2)
+    #     my_ds['PkHt_ch' + str(i)].attrs["long_name"] = "Height for channel %d" % i
+    #     my_ds['PkHt_ch' + str(i)].attrs["_FillValue"] = np.nan
+    #     my_ds['PkSplitPos_ch' + str(i)] = (('event_index'), PeakStart2)
+    #     my_ds['PkSplitPos_ch' + str(i)].attrs["long_name"] = "Peak start position for channel %d" % i
+    #     my_ds['PkSplitPos_ch' + str(i)].attrs["_FillValue"] = np.nan
+    #     my_ds['PkPos_ch' + str(i)] = (('event_index'), PeakPos2)
+    #     my_ds['PkPos_ch' + str(i)].attrs["long_name"] = "Peak split position for channel %d" % i
+    #     my_ds['PkPos_ch' + str(i)].attrs["_FillValue"] = np.nan
 
-    for i in [1, 2, 5, 6]:
+    for i in [1, 2, 3, 5, 6, 7]:  # 1,5 broadband hign/low gain; 2,6 redband high/low gain; 3,7 blueband high/low gain
         coeffs = _fit_record_incan_ave_base(my_ds, i, num_trig_pts)
         Base = coeffs['base']
         PeakHeight2 = coeffs['height']
@@ -140,35 +141,37 @@ def gaussian_fit(my_ds, config, parallel=False, num_records=None):
         HalfDecay2 = coeffs['half_decay']
         Peak2Area2 = coeffs['peak2area']
 
-        my_ds['Base_ch' + str(i)] = (('event_index'), Base)
+        my_ds['Base_ch' + str(i)] = (('time'), Base)
         my_ds['Base_ch' + str(i)].attrs["long_name"] = "Base for channel %d" % i
         my_ds['Base_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkHt_ch' + str(i)] = (('event_index'), PeakHeight2)
+        my_ds['PkHt_ch' + str(i)] = (('time'), PeakHeight2)
         my_ds['PkHt_ch' + str(i)].attrs["long_name"] = "Height for channel %d" % i
         my_ds['PkHt_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkHalfRise_ch' + str(i)] = (('event_index'), HalfRise2)
+        my_ds['PkHalfRise_ch' + str(i)] = (('time'), HalfRise2)
         my_ds['PkHalfRise_ch' + str(i)].attrs["long_name"] = "Point where rise is at 1/2 height for channel %d" % i
         my_ds['PkHalfRise_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['Peak2area_ch' + str(i)] = (('event_index'), Peak2Area2)
+        my_ds['Peak2area_ch' + str(i)] = (('time'), Peak2Area2)
         my_ds['Peak2area_ch' + str(i)].attrs["long_name"] = "Peak 2 area for channel %d" % i
         my_ds['Peak2area_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkHalfDecay_ch' + str(i)] = (('event_index'), HalfDecay2)
+        my_ds['PkHalfDecay_ch' + str(i)] = (('time'), HalfDecay2)
         my_ds['PkHalfDecay_ch' + str(i)].attrs["long_name"] = "Point where decay is at 1/2 height for channel %d" % i
         my_ds['PkHalfDecay_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkPos_ch' + str(i)] = (('event_index'), PeakPos2)
+        my_ds['PkPos_ch' + str(i)] = (('time'), PeakPos2)
         my_ds['PkPos_ch' + str(i)].attrs["long_name"] = "Peak position for channel %d" % i
         my_ds['PkPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkStart_ch' + str(i)] = (('event_index'), PeakStart2)
+        my_ds['PkStart_ch' + str(i)] = (('time'), PeakStart2)
         my_ds['PkStart_ch' + str(i)].attrs["long_name"] = "Peak start for channel %d" % i
         my_ds['PkStart_ch' + str(i)].attrs["_FillValue"] = np.nan
-        my_ds['PkEnd_ch' + str(i)] = (('event_index'), PeakEnd2)
+        my_ds['PkEnd_ch' + str(i)] = (('time'), PeakEnd2)
         my_ds['PkEnd_ch' + str(i)].attrs["long_name"] = "Peak end for channel %d" % i
         my_ds['PkEnd_ch' + str(i)].attrs["_FillValue"] = np.nan
-
+    
+    # do Gaussian fitting for scattering channels
     if not parallel:
         proc_records = []
         for i in range(num_records):
-            proc_records.append(_do_fit_records(my_ds, i, num_trig_pts))
+            if ((my_ds['PkHt_ch1'][i]>50) ): # only for incandescence particles; threshold from Zhao et al., 2020
+                proc_records.append(_do_fit_records(my_ds, i, num_trig_pts))
     else:
         fit_record = lambda x: _do_fit_records(my_ds, x, num_trig_pts)
         the_bag = db.from_sequence(range(num_records))
@@ -185,55 +188,55 @@ def gaussian_fit(my_ds, config, parallel=False, num_records=None):
 
     # Channel 0
     i = 0
-    my_ds['FtAmp_ch' + str(i)] = (('event_index'), FtAmp[:, 0])
+    my_ds['FtAmp_ch' + str(i)] = (('time'), FtAmp[:, 0])
     my_ds['FtAmp_ch' + str(i)].attrs["long_name"] = "Fit Amplitude for channel %d" % i
     my_ds['FtAmp_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['FtPos_ch' + str(i)] = (('event_index'), FtPos[:, 0])
+    my_ds['FtPos_ch' + str(i)] = (('time'), FtPos[:, 0])
     my_ds['FtPos_ch' + str(i)].attrs["long_name"] = "Fit Position for channel %d" % i
     my_ds['FtPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['Base_ch' + str(i)] = (('event_index'), Base[:, 0])
+    my_ds['Base_ch' + str(i)] = (('time'), Base[:, 0])
     my_ds['Base_ch' + str(i)].attrs["long_name"] = "Base for channel %d" % i
     my_ds['Base_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkHt_ch' + str(i)] = (('event_index'), PeakHeight[:, 0])
+    my_ds['PkHt_ch' + str(i)] = (('time'), PeakHeight[:, 0])
     my_ds['PkHt_ch' + str(i)].attrs["long_name"] = "Height for channel %d" % i
     my_ds['PkHt_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkFWHM_ch' + str(i)] = (('event_index'), Width[:, 0])
+    my_ds['PkFWHM_ch' + str(i)] = (('time'), Width[:, 0])
     my_ds['PkFWHM_ch' + str(i)].attrs["long_name"] = "Width for channel %d" % i
     my_ds['PkFWHM_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkPos_ch' + str(i)] = (('event_index'), PeakPos[:, 0])
+    my_ds['PkPos_ch' + str(i)] = (('time'), PeakPos[:, 0])
     my_ds['PkPos_ch' + str(i)].attrs["long_name"] = "Peak position for channel %d" % i
     my_ds['PkPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkStart_ch' + str(i)] = (('event_index'), PeakStart[:, 0])
+    my_ds['PkStart_ch' + str(i)] = (('time'), PeakStart[:, 0])
     my_ds['PkStart_ch' + str(i)].attrs["long_name"] = "Peak start for channel %d" % i
     my_ds['PkStart_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['GaussChiSq_ch' + str(i)] = (('event_index'), GaussChiSq[:, 0])
+    my_ds['GaussChiSq_ch' + str(i)] = (('time'), GaussChiSq[:, 0])
     my_ds['GaussChiSq_ch' + str(i)].attrs["long_name"] = "Chisquare value for channel %d" % i
     my_ds['GaussChiSq_ch' + str(i)].attrs["_FillValue"] = np.nan
 
     # Channel 4
     i = 4
-    my_ds['FtAmp_ch' + str(i)] = (('event_index'), FtAmp[:, 1])
+    my_ds['FtAmp_ch' + str(i)] = (('time'), FtAmp[:, 1])
     my_ds['FtAmp_ch' + str(i)].attrs["long_name"] = "Amplitude for channel %d" % i
     my_ds['FtAmp_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['Base_ch' + str(i)] = (('event_index'), Base[:, 1])
+    my_ds['Base_ch' + str(i)] = (('time'), Base[:, 1])
     my_ds['Base_ch' + str(i)].attrs["long_name"] = "Base for channel %d" % i
     my_ds['Base_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkHt_ch' + str(i)] = (('event_index'), PeakHeight[:, 1])
+    my_ds['PkHt_ch' + str(i)] = (('time'), PeakHeight[:, 1])
     my_ds['PkHt_ch' + str(i)].attrs["long_name"] = "Height for channel %d" % i
     my_ds['PkHt_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkFWHM_ch' + str(i)] = (('event_index'), Width[:, 1])
+    my_ds['PkFWHM_ch' + str(i)] = (('time'), Width[:, 1])
     my_ds['PkFWHM_ch' + str(i)].attrs["long_name"] = "Width for channel %d" % i
     my_ds['PkFWHM_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkPos_ch' + str(i)] = (('event_index'), PeakPos[:, 1])
+    my_ds['PkPos_ch' + str(i)] = (('time'), PeakPos[:, 1])
     my_ds['PkPos_ch' + str(i)].attrs["long_name"] = "Peak position for channel %d" % i
     my_ds['PkPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['FtPos_ch' + str(i)] = (('event_index'), FtPos[:, 1])
+    my_ds['FtPos_ch' + str(i)] = (('time'), FtPos[:, 1])
     my_ds['FtPos_ch' + str(i)].attrs["long_name"] = "Fit position for channel %d" % i
     my_ds['FtPos_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['PkStart_ch' + str(i)] = (('event_index'), PeakStart[:, 1])
+    my_ds['PkStart_ch' + str(i)] = (('time'), PeakStart[:, 1])
     my_ds['PkStart_ch' + str(i)].attrs["long_name"] = "Peak start for channel %d" % i
     my_ds['PkStart_ch' + str(i)].attrs["_FillValue"] = np.nan
-    my_ds['GaussChiSq_ch' + str(i)] = (('event_index'), GaussChiSq[:, 1])
+    my_ds['GaussChiSq_ch' + str(i)] = (('time'), GaussChiSq[:, 1])
     my_ds['GaussChiSq_ch' + str(i)].attrs["long_name"] = "Chisquare value for channel %d" % i
     my_ds['GaussChiSq_ch' + str(i)].attrs["_FillValue"] = np.nan
 
@@ -248,13 +251,23 @@ def gaussian_fit(my_ds, config, parallel=False, num_records=None):
     my_ds['IncanPkOffsetch5ch6'][~where_valid] = np.nan
 
     IncanRatioch1ch2 = _calc_incan_ratio(my_ds, 1, 2)
-    my_ds['IncanRatioch1ch2'] = (('event_index'), IncanRatioch1ch2)
+    my_ds['IncanRatioch1ch2'] = (('time'), IncanRatioch1ch2)
     my_ds['IncanRatioch1ch2'].attrs["long_name"] = "Incandescence ratio ch1, ch2"
     my_ds['IncanRatioch1ch2'].attrs["_FillValue"] = np.nan
     IncanRatioch5ch6 = _calc_incan_ratio(my_ds, 5, 6)
-    my_ds['IncanRatioch5ch6'] = (('event_index'), IncanRatioch5ch6)
+    my_ds['IncanRatioch5ch6'] = (('time'), IncanRatioch5ch6)
     my_ds['IncanRatioch5ch6'].attrs["long_name"] = "Incandescence ratio ch5, ch6"
     my_ds['IncanRatioch5ch6'].attrs["_FillValue"] = np.nan
+
+    # add blueband (3,7)/redband(2,6)
+    IncanRatioch3ch2 = _calc_incan_ratio(my_ds, 3, 2)
+    my_ds['IncanRatioch3ch2'] = (('time'), IncanRatioch3ch2)
+    my_ds['IncanRatioch3ch2'].attrs["long_name"] = "Incandescence ratio ch3, ch2"
+    my_ds['IncanRatioch3ch2'].attrs["_FillValue"] = np.nan
+    IncanRatioch7ch6 = _calc_incan_ratio(my_ds, 7, 6)
+    my_ds['IncanRatioch7ch6'] = (('time'), IncanRatioch7ch6)
+    my_ds['IncanRatioch7ch6'].attrs["long_name"] = "Incandescence ratio ch7, ch6"
+    my_ds['IncanRatioch7ch6'].attrs["_FillValue"] = np.nan
 
     # First do initial filter step
     scat_reject = np.logical_or.reduce(
@@ -333,10 +346,10 @@ def gaussian_fit(my_ds, config, parallel=False, num_records=None):
     incan_reject_key[incan_reject_reason9] = 9
     incan_reject_key[incan_reject_reason10] = 10
 
-    my_ds['ScatRejectKey'] = (('event_index'), scat_reject_key)
+    my_ds['ScatRejectKey'] = (('time'), scat_reject_key)
     my_ds['ScatRejectKey'].attrs["long_name"] = "Scattering reject flag"
     my_ds['ScatRejectKey'].attrs["_FillValue"] = np.nan
-    my_ds['IncanRejectKey'] = (('event_index'), incan_reject_key)
+    my_ds['IncanRejectKey'] = (('time'), incan_reject_key)
     my_ds['IncanRejectKey'].attrs["long_name"] = "Incandescence reject flag"
     my_ds['IncanRejectKey'].attrs["_FillValue"] = np.nan
 
